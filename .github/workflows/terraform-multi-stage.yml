@@ -29,7 +29,7 @@ jobs:
       - name: Path Checker
         working-directory: "src/terraform"
         run: |
-          if [ ! -f "${{ github.event.inputs.RG }}.tfplan" ]; then
+          if [ ! -d "${{ github.event.inputs.RG }}.tfplan" ]; then
             echo "Terraform plan file not found. Ensure RG name is correct and RG directory is initialized with all required code."
             exit 1
           fi
