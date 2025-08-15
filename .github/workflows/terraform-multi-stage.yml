@@ -58,6 +58,8 @@ jobs:
           name: "${{ github.event.inputs.RG }}.tfplan"
           path: "src/terraform/${{ github.event.inputs.RG }}"
 
+
+
   apply:
     needs: plan
     runs-on: ubuntu-latest
