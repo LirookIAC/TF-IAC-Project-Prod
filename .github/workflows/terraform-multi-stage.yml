@@ -49,7 +49,7 @@ jobs:
         working-directory: "src/terraform/${{ github.event.inputs.RG }}"
         run: |
           chmod +x ../../../.github/workflows/scripts/terraform-with-backend.sh
-          ../../../.github/workflows/scripts/terraform-with-backend.sh plan -var-file=backend.tfvars -out="${{ github.event.inputs.RG }}.tfplan"
+          ../../../.github/workflows/scripts/terraform-with-backend.sh plan -out="${{ github.event.inputs.RG }}.tfplan"
 
 
       - name: Upload Terraform Plan as Artifact
