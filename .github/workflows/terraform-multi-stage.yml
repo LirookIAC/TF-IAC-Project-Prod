@@ -56,7 +56,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: "${{ github.event.inputs.RG }}.tfplan"
-          path: "src/terraform/${{ github.event.inputs.RG }}.tfplan"
+          path: "src/terraform/${{ github.event.inputs.RG }}"
 
   apply:
     needs: plan
@@ -85,7 +85,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: "${{ github.event.inputs.RG }}.tfplan"
-          path: "src/terraform/${{ github.event.inputs.RG }}.tfplan"
+          path: "src/terraform/${{ github.event.inputs.RG }}"
 
       - name: Terraform Validate
         working-directory: "src/terraform/${{ github.event.inputs.RG }}"
