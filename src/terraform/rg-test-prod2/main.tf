@@ -4,7 +4,6 @@ resource "azurerm_resource_group" "rg-test-prod2" {
   location = "West India"
 }
 
-
 resource "azurerm_network_security_group" "example" {
   name                = "acceptanceTestSecurityGroup1"
   location            = azurerm_resource_group.rg-test-prod2.location
@@ -26,3 +25,4 @@ resource "azurerm_network_security_group" "example" {
     environment = "Production"
   }
 }
+
