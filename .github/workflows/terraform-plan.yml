@@ -7,10 +7,19 @@ on:
         required: true
 
 jobs:
+  Setup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set Matrix Value
+        run: | 
+          newVAL=$(echo ${{ github.event.inputs.RG }} | jq -R 'split(",")')
+          echo "RGS=${newVAL}" >> $GITHUB_OUTPUT
+
   plan:
+    needs: Setup
     strategy:
       matrix:
-        rg: ${{ fromJSON(format('["{0}"]', replace(github.event.inputs.RG, ',', '","'))) }}
+        rg: ${{ fromJSON(needs.Setup.outputs.RGS) }}
     runs-on: ubuntu-latest
     env:
       ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
