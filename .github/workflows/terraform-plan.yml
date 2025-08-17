@@ -12,7 +12,7 @@ jobs:
     steps:
       - name: Set Matrix Value
         run: | 
-          newVAL=$(echo ${{ github.event.inputs.RG }} | jq -R 'split(",")')
+          newVAL=$(echo ${{ github.event.inputs.RG }} | jq -c -R 'split(",")')
           echo "RGS=${newVAL}" >> $GITHUB_OUTPUT
 
   plan:
