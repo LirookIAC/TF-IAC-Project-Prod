@@ -8,13 +8,15 @@ on:
 
 jobs:
   Setup:
+    outputs:
+      RGS: ${{ steps.Set_Matrix_Value.outputs.RGS }}
     runs-on: ubuntu-latest
     steps:
-      - name: Set Matrix Value
+      - id: Set_Matrix_Value
         run: | 
           newVAL=$(echo ${{ github.event.inputs.RG }} | jq -c -R 'split(",")')
           echo $newVAL
-          #echo "RGS=${newVAL}" >> $GITHUB_OUTPUT
+          echo "RGS=$newVAL" >> $GITHUB_OUTPUT
 
   plan:
     needs: Setup
