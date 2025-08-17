@@ -10,7 +10,7 @@ jobs:
   plan:
     strategy:
       matrix:
-        rg: ${{ fromJSON(format('["{0}"]', replace(matrix.rg, ',', '","'))) }}
+        rg: ${{ fromJSON(format('["{0}"]', replace(github.event.inputs.RG, ',', '","'))) }}
     runs-on: ubuntu-latest
     env:
       ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
