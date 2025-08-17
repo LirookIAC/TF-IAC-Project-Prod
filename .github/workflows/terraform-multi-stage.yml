@@ -3,11 +3,27 @@ on:
   workflow_dispatch:
     inputs:
       RG:
-        description: 'The resource group to work with.'
+        description: 'Comma separated RGs to work with'
         required: true
 
 jobs:
+
+  Setup:
+    outputs:
+      RGS: ${{ steps.Set_Matrix_Value.outputs.RGS }}
+    runs-on: ubuntu-latest
+    steps:
+      - id: Set_Matrix_Value
+        run: | 
+          newVAL=$(echo ${{ github.event.inputs.RG }} | jq -c -R 'split(",")')
+          echo $newVAL
+          echo "RGS=$newVAL" >> $GITHUB_OUTPUT
+
   plan:
+    needs: Setup
+    strategy:
+      matrix:
+        rg: ${{ fromJSON(needs.Setup.outputs.RGS) }}
     environment: development
     runs-on: ubuntu-latest
     env:
@@ -30,7 +46,7 @@ jobs:
       - name: Path Checker
         working-directory: "src/terraform"
         run: |
-          if [ ! -d "${{ github.event.inputs.RG }}" ]; then
+          if [ ! -d "${{ matrix.rg }}" ]; then
             echo "Terraform plan file not found. Ensure RG name is correct and RG directory is initialized with all required code."
             exit 1
           fi
@@ -38,31 +54,34 @@ jobs:
       - name: Set Plan File Name
         working-directory: "src/terraform"
         run: |
-          echo "TF_BACKEND_KEY=${{ github.event.inputs.RG }}.tfplan" >> $GITHUB_ENV
+          echo "TF_BACKEND_KEY=${{ matrix.rg }}.tfplan" >> $GITHUB_ENV
 
       - name: Terraform Validate
-        working-directory: "src/terraform/${{ github.event.inputs.RG }}"
+        working-directory: "src/terraform/${{ matrix.rg }}"
         run: |
           chmod +x ../../../.github/workflows/scripts/terraform-with-backend.sh
           ../../../.github/workflows/scripts/terraform-with-backend.sh validate
 
       - name: Terraform Plan
-        working-directory: "src/terraform/${{ github.event.inputs.RG }}"
+        working-directory: "src/terraform/${{ matrix.rg }}"
         run: |
           chmod +x ../../../.github/workflows/scripts/terraform-with-backend.sh
-          ../../../.github/workflows/scripts/terraform-with-backend.sh plan -out="${{ github.event.inputs.RG }}.tfplan"
+          ../../../.github/workflows/scripts/terraform-with-backend.sh plan -out="${{ matrix.rg }}.tfplan"
 
 
       - name: Upload Terraform Plan as Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: "${{ github.event.inputs.RG }}.tfplan"
-          path: "src/terraform/${{ github.event.inputs.RG }}"
+          name: "${{ matrix.rg }}.tfplan"
+          path: "src/terraform/${{ matrix.rg }}"
 
 
 
   apply:
-    needs: plan
+    needs: ["Setup","plan"]
+    strategy:
+      matrix:
+        rg: ${{ fromJSON(needs.Setup.outputs.RGS) }} 
     runs-on: ubuntu-latest
     environment: Prod
     env:
@@ -83,29 +102,29 @@ jobs:
       - name: Set Plan File Name
         working-directory: "src/terraform"
         run: |
-          echo "TF_BACKEND_KEY=${{ github.event.inputs.RG }}.tfplan" >> $GITHUB_ENV
+          echo "TF_BACKEND_KEY=${{ matrix.rg }}.tfplan" >> $GITHUB_ENV
 
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: "${{ github.event.inputs.RG }}.tfplan"
-          path: "src/terraform/${{ github.event.inputs.RG }}"
+          name: "${{ matrix.rg }}.tfplan"
+          path: "src/terraform/${{ matrix.rg }}"
 
       - name: Terraform Validate
-        working-directory: "src/terraform/${{ github.event.inputs.RG }}"
+        working-directory: "src/terraform/${{ matrix.rg }}"
         run: |
           chmod +x ../../../.github/workflows/scripts/terraform-with-backend.sh
           ../../../.github/workflows/scripts/terraform-with-backend.sh validate
 
       - name: Terraform Apply
-        working-directory: "src/terraform/${{ github.event.inputs.RG }}"
+        working-directory: "src/terraform/${{ matrix.rg }}"
         run: |
           chmod +x ../../../.github/workflows/scripts/terraform-with-backend.sh
-          ../../../.github/workflows/scripts/terraform-with-backend.sh apply -auto-approve "${{ github.event.inputs.RG }}.tfplan"
+          ../../../.github/workflows/scripts/terraform-with-backend.sh apply -auto-approve "${{ matrix.rg }}.tfplan"
       
       - name: Delete Plan Artifact
         uses: geekyeggo/delete-artifact@v5
         with:
-            name: "${{ github.event.inputs.RG }}.tfplan"
+            name: "${{ matrix.rg }}.tfplan"
 
           
