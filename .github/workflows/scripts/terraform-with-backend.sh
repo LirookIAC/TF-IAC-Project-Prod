@@ -1,4 +1,3 @@
-set -e
 
 echo '=== AzureRM Backend Config ==='
 echo 'Resource Group Name: '$BACKEND_RESOURCE_GROUP_NAME
