@@ -1,0 +1,75 @@
+name: Terraform Drift Checker
+on:
+  workflow_dispatch:
+jobs:
+  Setup:
+    outputs:
+      RGS: ${{ steps.Set_Matrix_Value.outputs.RGS }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - id: Set_Matrix_Value
+        run: | 
+          newVAL=$(ls src/terraform | jq -R -s -c 'split("\n")[:-1]')
+          echo $newVAL
+          echo "RGS=$newVAL" >> $GITHUB_OUTPUT
+
+  plan:
+    needs: Setup
+    strategy:
+      matrix:
+        rg: ${{ fromJSON(needs.Setup.outputs.RGS) }}
+    runs-on: ubuntu-latest
+    env:
+      ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+      ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+      ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+      BACKEND_RESOURCE_GROUP_NAME: ${{ secrets.BACKEND_RESOURCE_GROUP_NAME }}
+      BACKEND_STORAGE_ACCOUNT_NAME: ${{ secrets.BACKEND_STORAGE_ACCOUNT_NAME }}
+      BACKEND_STORAGE_CONTAINER_NAME: ${{ secrets.BACKEND_STORAGE_CONTAINER_NAME }}
+
+    steps:
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Path Checker
+        working-directory: "src/terraform"
+        run: |
+          if [ ! -d "${{ matrix.rg }}" ]; then
+            echo "Terraform directory for RG not found. Ensure RG name is correct and RG directory is initialized with all required code."
+            exit 1
+          fi
+      
+      - name: Set Plan File Name
+        working-directory: "src/terraform"
+        run: |
+          echo "TF_BACKEND_KEY=${{ matrix.rg }}.tfplan" >> $GITHUB_ENV
+
+      - name: Terraform Validate
+        working-directory: "src/terraform/${{ matrix.rg }}"
+        run: |
+          chmod +x ../../../.github/workflows/scripts/terraform-with-backend.sh
+          ../../../.github/workflows/scripts/terraform-with-backend.sh validate
+
+      - name: Terraform Plan
+        working-directory: "src/terraform/${{ matrix.rg }}"
+        run: |
+          chmod +x ../../../.github/workflows/scripts/terraform-with-backend.sh
+          ../../../.github/workflows/scripts/terraform-with-backend.sh plan -detailed-exitcode -out="${{ matrix.rg }}.tfplan"
+
+      - name: Check Drift Status
+        working-directory: "src/terraform/${{ matrix.rg }}"
+        run: |
+          if [ $? -eq 2 ]; then
+            echo "Drift detected in ${{ matrix.rg }}!"
+            exit 1
+          else
+            echo "No drift in ${{ matrix.rg }}"
+          fi
