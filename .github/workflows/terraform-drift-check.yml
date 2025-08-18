@@ -63,7 +63,7 @@ jobs:
         continue-on-error: true
         run: |
           chmod +x ../../../.github/workflows/scripts/terraform-with-backend.sh
-          ../../../.github/workflows/scripts/terraform-with-backend.sh plan -detailed-exitcode -out="${{ matrix.rg }}.tfplan"
+          ../../../.github/workflows/scripts/terraform-with-backend.sh plan -detailed-exitcode
           exit_code=$?
           if [ $exit_code -eq 2 ]; then
             echo "⚠️ Drift detected in **${{ matrix.rg }}**" | tee -a $GITHUB_STEP_SUMMARY
