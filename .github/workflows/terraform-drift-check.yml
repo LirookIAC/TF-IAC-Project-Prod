@@ -60,6 +60,7 @@ jobs:
 
       - name: Terraform Plan (Drift Detection)
         working-directory: "src/terraform/${{ matrix.rg }}"
+        continue-on-error: true
         run: |
           chmod +x ../../../.github/workflows/scripts/terraform-with-backend.sh
           ../../../.github/workflows/scripts/terraform-with-backend.sh plan -detailed-exitcode -out="${{ matrix.rg }}.tfplan"
