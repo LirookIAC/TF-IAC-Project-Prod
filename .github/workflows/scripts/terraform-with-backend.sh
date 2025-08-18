@@ -13,4 +13,5 @@ terraform init \
   -backend-config="key=$TF_BACKEND_KEY"
 
 terraform $1 $2 $3
-echo $?
+exitcode=$?
+echo $exitcode
