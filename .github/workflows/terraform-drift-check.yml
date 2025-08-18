@@ -62,7 +62,7 @@ jobs:
         working-directory: "src/terraform/${{ matrix.rg }}"
         continue-on-error: true
         run: |
-          chmod +x ../../../.github/workflows/scripts/terraform-with-backend.sh
+          chmod +x ../../../.github/workflows/scripts/terraform-with-backend-drift-checker.sh
           ../../../.github/workflows/scripts/terraform-with-backend-drift-checker.sh
           terraform plan -detailed-exitcode
           exit_code=$?
